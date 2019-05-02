@@ -8,10 +8,8 @@ common:
   release-params: &release-params
     user:
       type: string
-      default: $CIRCLE_PROJECT_USERNAME
     repository:
       type: string
-      default: $CIRCLE_PROJECT_REPONAME
     token:
       type: string
       default: $GITHUB_TOKEN
@@ -77,28 +75,28 @@ commands:
             curl \
               -o content.json \
               -H "Authorization: token <<parameters.token>>" \
-              https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>.rb
+              https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>
 
             if [ "$(jq -M .content content.json)" = 'null' ]; then
-              maltmil new -token <<parameters.token>> -w <<parameters.user>>/<<parameters.repository>>
-              content=$(base64 -i -w 0 <<parameters.repository>>.rb)
+              maltmill new -token <<parameters.token>> -w $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+              content=$(base64 -i -w 0 $CIRCLE_PROJECT_REPONAME.rb)
               curl \
                 --fail \
                 -X PUT \
                 -H "Authorization: token <<parameters.token>>" \
                 -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
-                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>.rb
+                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>
             else
-              jq -M .content content.json | base64 -D > <<parameters.repository>>.rb
-              maltmil -token <<parameters.token>> -w <<parameters.repository>>.rb
-              content=$(base64 -i -w 0 <<parameters.repository>>.rb)
+              jq -M .content content.json | base64 -D > $CIRCLE_PROJECT_REPONAME.rb
+              maltmill -token <<parameters.token>> -w $CIRCLE_PROJECT_REPONAME.rb
+              content=$(base64 -i -w 0 $CIRCLE_PROJECT_REPONAME.rb)
               sha=$(jq -M .sha content.json)
               curl \
                 --fail \
                 -X PUT \
                 -H "Authorization: token <<parameters.token>>" \
                 -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"sha\": \"$sha\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
-                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>.rb
+                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>
             fi
 
 #  Jobs
