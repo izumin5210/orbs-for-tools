@@ -18,10 +18,10 @@ common:
     commitish:
       type: string
       default: $CIRCLE_SHA1
-    name:
+    release-name:
       type: string
       default: $VERSION
-    body:
+    release-body:
       type: string
       default: ""
     draft:
@@ -44,7 +44,7 @@ common:
       default: false
     tag:
       type: string
-      default: $VERSION
+      default: $CIRCLE_TAG
     path:
       type: string
       default: "./artifacts/"
@@ -68,11 +68,6 @@ commands:
     description: Create a new release on GitHub
     parameters:
       <<: *ghr-params
-      output-dir:
-        type: string
-        default: "."
-      packages:
-        type: string
 
     steps:
       - run:
@@ -83,18 +78,19 @@ commands:
           name: "[ghr] Create release"
           command: |
             ghr \
-              -user="<<parameters.user>>" \
+              -username="<<parameters.user>>" \
               -repository="<<parameters.repository>>" \
               -token="<<parameters.token>>" \
               -commitish="<<parameters.commitish>>" \
-              -name="<<parameters.name>>" \
-              -body="<<parameters.body>>" \
+              -name="<<parameters.release-name>>" \
+              -body="<<parameters.release-body>>" \
               <<#parameters.draft>>--draft <</ parameters.draft>>\
               <<#parameters.prerelease>>--prerelease <</ parameters.prerelease>>\
               -parallel="<<parameters.parallel>>" \
               <<#parameters.recreate>>--recreate <</ parameters.recreate>>\
               <<#parameters.replace>>--replace <</ parameters.replace>>\
               <<#parameters.soft>>--soft <</ parameters.soft>>\
+              <<parameters.tag>> \
               <<parameters.path>>
 
 #  Jobs
@@ -128,8 +124,8 @@ jobs:
           repository: <<parameters.repository>>
           token: <<parameters.token>>
           commitish: <<parameters.commitish>>
-          name: <<parameters.name>>
-          body: <<parameters.body>>
+          release-name: <<parameters.release-name>>
+          release-body: <<parameters.release-body>>
           draft: <<parameters.draft>>
           prerelease: <<parameters.prerelease>>
           parallel: <<parameters.parallel>>
