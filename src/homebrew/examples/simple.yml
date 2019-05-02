@@ -1,0 +1,29 @@
+description: Simple and recommended configuration
+
+usage:
+  version: 2.1
+
+  orbs:
+    homebrew: izumin5210/homebrew@0.0.1
+
+  aliases:
+    filter-release: &filter-release
+      filters:
+        branches:
+          ignore: /.*/
+        tags:
+          only: /^v\d+\.\d+\.\d+$/
+
+  workflows:
+    build:
+      jobs:
+        - homebrew/update:
+            <<: *filter-release
+            # This context contains following env vars:
+            # * HOMEBREW_TAP_REPO_SLUG
+            # * GITHUB_TOKEN
+            # * GITHUB_EMAIL
+            # * GITHUB_USER
+            context: tool-releasing
+            requires:
+              - github-release/create

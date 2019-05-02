@@ -1,6 +1,9 @@
 version: 2.1
 
-description: Create a new release on GitHub
+description: |
+  Create a new release on GitHub
+  https://github.com/izumin5210/orbs-for-tools
+
 
 #  Common
 #----------------------------------------------------------------
@@ -9,45 +12,55 @@ common:
     user:
       type: string
       default: $CIRCLE_PROJECT_USERNAME
+      description: "GitHub repositoy owner(username or organization name)"
     repository:
       type: string
       default: $CIRCLE_PROJECT_REPONAME
+      description: "GitHub repositoy name"
     token:
       type: string
       default: $GITHUB_TOKEN
+      description: "GitHub access token to create GitHub releases"
     commitish:
       type: string
       default: $CIRCLE_SHA1
+      description: "git commit hash, branch, or tag of created release"
     release-name:
       type: string
-      default: $VERSION
+      default: ""
+      description: "Title of a release"
     release-body:
       type: string
       default: ""
+      description: "Description of a release"
     draft:
       type: boolean
       default: false
+      description: "Create as draft"
     prerelease:
       type: boolean
       default: false
-    parallel:
-      type: integer
-      default: -1
+      description: "Create as prerelease"
     recreate:
       type: boolean
       default: false
+      description: "Delete a release before create if it already exists"
     replace:
       type: boolean
       default: false
+      description: "Replace artifacts if a release is already exists"
     soft:
       type: boolean
       default: false
+      description: "Stop releasing if a release already exists"
     tag:
       type: string
       default: $CIRCLE_TAG
+      description: "Release tag"
     path:
       type: string
       default: "./artifacts/"
+      description: "Path to artifacts"
 
 #  Executors
 #----------------------------------------------------------------
@@ -86,7 +99,6 @@ commands:
               -body="<<parameters.release-body>>" \
               <<#parameters.draft>>--draft <</ parameters.draft>>\
               <<#parameters.prerelease>>--prerelease <</ parameters.prerelease>>\
-              -parallel="<<parameters.parallel>>" \
               <<#parameters.recreate>>--recreate <</ parameters.recreate>>\
               <<#parameters.replace>>--replace <</ parameters.replace>>\
               <<#parameters.soft>>--soft <</ parameters.soft>>\
@@ -128,7 +140,6 @@ jobs:
           release-body: <<parameters.release-body>>
           draft: <<parameters.draft>>
           prerelease: <<parameters.prerelease>>
-          parallel: <<parameters.parallel>>
           recreate: <<parameters.recreate>>
           replace: <<parameters.replace>>
           soft: <<parameters.soft>>

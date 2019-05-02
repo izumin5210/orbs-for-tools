@@ -1,6 +1,8 @@
 version: 2.1
 
-description: Build Go applications for multiplatform
+description: |
+  Build Go applications for multiplatform
+  https://github.com/izumin5210/orbs-for-tools
 
 #  Common
 #----------------------------------------------------------------
@@ -12,18 +14,21 @@ common:
     arch:
       type: string
       default: "amd64"
+      description: "Space or comma separated list of GOARCH"
     dest:
       type: string
       default: "./artifacts"
+      description: "Path to destination directory of built binaries"
     ldflags:
       type: string
-      default: ""
+      default: "'-ldflags' to pass to go build"
     tags:
       type: string
-      default: ""
+      default: "'-tags' to pass to go build"
     os:
       type: string
       default: "darwin,linux,windows"
+      description: "Space or comma separated list of GOOS"
 
 #  Executors
 #----------------------------------------------------------------

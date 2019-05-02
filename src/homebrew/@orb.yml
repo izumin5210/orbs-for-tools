@@ -1,6 +1,8 @@
 version: 2.1
 
-description: Create a new Formula for Homebrew
+description: |
+  Create a Formula for Homebrew
+  https://github.com/izumin5210/orbs-for-tools
 
 #  Common
 #----------------------------------------------------------------
@@ -9,21 +11,27 @@ common:
     tap:
       type: string
       default: $HOMEBREW_TAP_REPO_SLUG
+      description: "GitHub repository slug(<username>/<repository>) for Homebrew Tap"
     token:
       type: string
       default: $GITHUB_TOKEN
+      description: "GitHub access token to create/update formulae on homebrew tap repository"
     commit-message:
       type: string
       default: "Bump ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} formula"
+      description: "A message for commiting Homebrew formulae"
     committer-name:
       type: string
       default: $GITHUB_USER
+      description: "A github username for commiting Homebrew formulae"
     committer-email:
       type: string
       default: $GITHUB_EMAIL
+      description: "An email for commiting Homebrew formulae"
     formula:
       type: string
       default: "Formula/${CIRCLE_PROJECT_REPONAME}.rb"
+      description: "Path to formula file"
 
 #  Executor
 #----------------------------------------------------------------

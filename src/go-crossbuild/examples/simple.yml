@@ -1,0 +1,23 @@
+description: Simple and recommended configuration
+
+usage:
+  version: 2.1
+
+  orbs:
+    homebrew: izumin5210/go-crossbuild@0.0.1
+
+  workflows:
+    build:
+      jobs:
+        # you should download dependencies
+        - setup
+
+        - go-crossbuild/build:
+            executor: default
+            packages: ./cmd/awesomecli
+            workspace-root: /go/src/github.com/example/awesomecli
+            requires:
+              - setup
+            filters:
+              tags:
+                only: /.*/
