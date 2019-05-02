@@ -24,3 +24,20 @@ workflows:
           orb-path: workspace/packed/gox/orb.yml
           requires:
             - pack-gox
+
+      - orb-tools/pack:
+          name: pack-ghr
+          source-dir: src/ghr
+          destination-orb-path: packed/ghr/orb.yml
+          workspace-path: packed/ghr/orb.yml
+          artifact-path: packed/ghr/orb.yml
+          requires:
+            - orb-tools/lint
+
+      - orb-tools/publish-dev:
+          name: publish-dev-ghr
+          context: orb-publishing
+          orb-name: izumin5210/ghr
+          orb-path: workspace/packed/ghr/orb.yml
+          requires:
+            - pack-ghr

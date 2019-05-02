@@ -1,0 +1,140 @@
+version: 2.1
+
+description: Create a new release on GitHub
+
+#  Common
+#----------------------------------------------------------------
+common:
+  ghr-params: &ghr-params
+    user:
+      type: string
+      default: $CIRCLE_PROJECT_USERNAME
+    repository:
+      type: string
+      default: $CIRCLE_PROJECT_REPONAME
+    token:
+      type: string
+      default: $GITHUB_TOKEN
+    commitish:
+      type: string
+      default: $CIRCLE_SHA1
+    name:
+      type: string
+      default: $VERSION
+    body:
+      type: string
+      default: ""
+    draft:
+      type: boolean
+      default: false
+    prerelease:
+      type: boolean
+      default: false
+    parallel:
+      type: integer
+      default: -1
+    recreate:
+      type: boolean
+      default: false
+    replace:
+      type: boolean
+      default: false
+    soft:
+      type: boolean
+      default: false
+    tag:
+      type: string
+      default: $VERSION
+    path:
+      type: string
+      default: "./artifacts/"
+
+#  Executors
+#----------------------------------------------------------------
+executors:
+  default:
+    parameters:
+      tag:
+        description: Specify circleci/golang image tag
+        type: string
+        default: 'latest'
+    docker:
+      - image: circleci/golang:<< parameters.tag >>
+
+#  Commands
+#----------------------------------------------------------------
+commands:
+  create:
+    description: Create a new release on GitHub
+    parameters:
+      <<: *ghr-params
+      output-dir:
+        type: string
+        default: "."
+      packages:
+        type: string
+
+    steps:
+      - run:
+          name: "[ghr] Install tools"
+          command: go get github.com/tcnksm/ghr
+
+      - run:
+          name: "[ghr] Create release"
+          command: |
+            ghr \
+              -user="<<parameters.user>>" \
+              -repository="<<parameters.repository>>" \
+              -token="<<parameters.token>>" \
+              -commitish="<<parameters.commitish>>" \
+              -name="<<parameters.name>>" \
+              -body="<<parameters.body>>" \
+              <<#parameters.draft>>--draft <</ parameters.draft>>\
+              <<#parameters.prerelease>>--prerelease <</ parameters.prerelease>>\
+              -parallel="<<parameters.parallel>>" \
+              <<#parameters.recreate>>--recreate <</ parameters.recreate>>\
+              <<#parameters.replace>>--replace <</ parameters.replace>>\
+              <<#parameters.soft>>--soft <</ parameters.soft>>\
+              <<parameters.path>>
+
+#  Jobs
+#----------------------------------------------------------------
+jobs:
+  create:
+    executor: <<parameters.executor>>
+    description: Create a new release on GitHub
+
+    parameters:
+      <<: *ghr-params
+      executor:
+        description: Executor to use for releasing applications
+        type: executor
+        default: default
+      workspace-root:
+        type: string
+        default: .
+      attach-workspace:
+        type: boolean
+        default: true
+
+    steps:
+      - when:
+          condition: <<parameters.attach-workspace>>
+          steps:
+            - attach_workspace:
+                at: <<parameters.workspace-root>>
+      - create:
+          user: <<parameters.user>>
+          repository: <<parameters.repository>>
+          token: <<parameters.token>>
+          commitish: <<parameters.commitish>>
+          name: <<parameters.name>>
+          body: <<parameters.body>>
+          draft: <<parameters.draft>>
+          prerelease: <<parameters.prerelease>>
+          parallel: <<parameters.parallel>>
+          recreate: <<parameters.recreate>>
+          replace: <<parameters.replace>>
+          soft: <<parameters.soft>>
+          tag: <<parameters.tag>>
+          path: <<parameters.path>>
