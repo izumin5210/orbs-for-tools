@@ -61,18 +61,10 @@ common:
       type: string
       default: "./artifacts/"
       description: "Path to artifacts"
-
-#  Executors
-#----------------------------------------------------------------
-executors:
-  default:
-    parameters:
-      tag:
-        description: Specify circleci/golang image tag
-        type: string
-        default: 'latest'
-    docker:
-      - image: circleci/golang:<< parameters.tag >>
+    ghr-version:
+      type: string
+      default: v0.12.1
+      description: "Version of github.com/tcnksm/ghr"
 
 #  Commands
 #----------------------------------------------------------------
@@ -85,7 +77,11 @@ commands:
     steps:
       - run:
           name: "[ghr] Install tools"
-          command: go get github.com/tcnksm/ghr
+          command: |
+            archive=ghr_<<parameters.ghr-version>>_linux_amd64
+            curl -L https://github.com/tcnksm/ghr/releases/download/<<parameters.ghr-version>>/${archive}.tar.gz | tar xzf -
+            sudo cp ./${archive}/ghr /usr/local/bin/
+            rm -rf ./${archive}
 
       - run:
           name: "[ghr] Create release"
@@ -109,8 +105,10 @@ commands:
 #----------------------------------------------------------------
 jobs:
   create:
-    executor: <<parameters.executor>>
     description: Create a new release on GitHub
+
+    docker:
+      - image: circleci/buildpack-deps:latest
 
     parameters:
       <<: *ghr-params

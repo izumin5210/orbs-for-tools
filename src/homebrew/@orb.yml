@@ -32,18 +32,10 @@ common:
       type: string
       default: "Formula/${CIRCLE_PROJECT_REPONAME}.rb"
       description: "Path to formula file"
-
-#  Executor
-#----------------------------------------------------------------
-executors:
-  default:
-    parameters:
-      tag:
-        description: Specify circleci/golang image tag
-        type: string
-        default: 'latest'
-    docker:
-      - image: circleci/golang:<< parameters.tag >>
+    maltmill-version:
+      type: string
+      default: v0.4.1
+      description: "Version of github.com/Songmu/maltmill"
 
 #  Commands
 #----------------------------------------------------------------
@@ -79,7 +71,11 @@ commands:
 
       - run:
           name: "[homebrew] Install tools"
-          command: go get github.com/Songmu/maltmill/cmd/maltmill
+          command: |
+            archive=maltmill_<<parameters.maltmill-version>>_linux_amd64
+            curl -L https://github.com/Songmu/maltmill/releases/download/<<parameters.maltmill-version>>/${archive}.tar.gz | tar xzf -
+            sudo cp ./${archive}/maltmill /usr/local/bin/
+            rm -rf ./${archive}
 
       - run:
           name: "[homewbrew] Create or update Formula"
@@ -115,8 +111,10 @@ commands:
 #----------------------------------------------------------------
 jobs:
   update:
-    executor: <<parameters.executor>>
     description: Create a new Formula for Homebrew
+
+    docker:
+      - image: circleci/buildpack-deps:latest
 
     parameters:
       <<: *release-params
@@ -133,3 +131,4 @@ jobs:
           committer-email: <<parameters.committer-email>>
           commit-message: <<parameters.commit-message>>
           formula: <<parameters.formula>>
+          maltmill-version: <<parameters.maltmill-version>>

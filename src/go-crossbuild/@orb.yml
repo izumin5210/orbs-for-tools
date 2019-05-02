@@ -7,7 +7,7 @@ description: |
 #  Common
 #----------------------------------------------------------------
 common:
-  gox-params: &goxz-params
+  goxz-params: &goxz-params
     app_name:
       type: string
       default: $CIRCLE_PROJECT_REPONAME
@@ -21,14 +21,23 @@ common:
       description: "Path to destination directory of built binaries"
     ldflags:
       type: string
-      default: "'-ldflags' to pass to go build"
+      default: ""
+      description: "'-ldflags' to pass to go build"
     tags:
       type: string
-      default: "'-tags' to pass to go build"
+      default: ""
+      description: "'-tags' to pass to go build"
     os:
       type: string
       default: "darwin,linux,windows"
       description: "Space or comma separated list of GOOS"
+    packages:
+      type: string
+      description: "Build target package"
+    goxz-version:
+      type: string
+      default: v0.4.1
+      description: "Version of github.com/Songmu/goxz"
 
 #  Executors
 #----------------------------------------------------------------
@@ -49,13 +58,15 @@ commands:
     description: Build an application
     parameters:
       <<: *goxz-params
-      packages:
-        type: string
 
     steps:
       - run:
           name: "[go-crossbuild] Install tools"
-          command: go get github.com/Songmu/goxz/cmd/goxz
+          command: |
+            archive=goxz_<<parameters.goxz-version>>_linux_amd64
+            curl -L https://github.com/Songmu/goxz/releases/download/<<parameters.goxz-version>>/${archive}.tar.gz | tar xzf -
+            sudo cp ./${archive}/goxz /usr/local/bin/
+            rm -rf ./${archive}
 
       - run:
           name: "[go-crossbuild] Build an application"
@@ -85,18 +96,19 @@ jobs:
       workspace-root:
         type: string
         default: "."
+        description: "A path to a workspace root"
       attach-workspace:
         type: boolean
         default: true
+        description: "Attach to an existing workspace"
       persist-to-workspace:
         type: boolean
         default: true
+        description: "Persis a current workspace"
       persist-paths:
         type: string
         default: "."
-      # for build job
-      packages:
-        type: string
+        description: "A path that will be persisted"
 
     steps:
       - when:
@@ -105,14 +117,14 @@ jobs:
             - attach_workspace:
                 at: <<parameters.workspace-root>>
       - build:
-          packages: <<parameters.packages>>
-          # gox-params
           app_name: <<parameters.app_name>>
           arch: <<parameters.arch>>
           dest: <<parameters.dest>>
           ldflags: <<parameters.ldflags>>
           tags: <<parameters.tags>>
           os: <<parameters.os>>
+          packages: <<parameters.packages>>
+          goxz-version: <<parameters.goxz-version>>
       - when:
           condition: <<parameters.persist-to-workspace>>
           steps:
