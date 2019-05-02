@@ -5,67 +5,76 @@
 :recycle: CircleCI Orbs for Continous-Delivery for Tools
 
 ```yaml
-description: Build Go app for multiplatform, upload built binaries to GitHub release, and update a Homebrew formula
+version: 2.1
 
-usage:
-  version: 2.1
+orbs:
+  go-module: timakin/go-module@0.3.0
+  go-crossbuild: izumin5210/go-crossbuild@0.0.1
+  github-release: izumin5210/github-release@0.0.1
+  homebrew: izumin5210/homebrew@0.0.1
 
-  orbs:
-    go-module: timakin/go-module@0.3.0
-    go-crossbuild: izumin5210/go-crossbuild@0.0.1
-    github-release: izumin5210/github-release@0.0.1
-    homebrew: izumin5210/homebrew@0.0.1
+aliases:
+  filter-default: &filter-default
+    filters:
+      tags:
+        only: /.*/
+  filter-release: &filter-release
+    filters:
+      branches:
+        ignore: /.*/
+      tags:
+        only: /^v\d+\.\d+\.\d+$/
 
-  aliases:
-    filter-default: &filter-default
-      filters:
-        tags:
-          only: /.*/
-    filter-release: &filter-release
-      filters:
-        branches:
-          ignore: /.*/
-        tags:
-          only: /^v\d+\.\d+\.\d+$/
-
-  executors:
-    default:
-      working_directory: /go/src/github.com/izumin5210/pubsubcli
-      docker:
+executors:
+  default:
+    working_directory: /go/src/github.com/example/awesomecli
+    docker:
       - image: circleci/golang:1.12
-      environment:
+    environment:
       - GO111MODULE: "on"
 
-  workflows:
-    build:
-      jobs:
-        - go-module/download:
-            <<: *filter-default
-            executor: default
-            checkout: true
-            persist-to-workspace: true
-            vendoring: true
-            workspace-root: /go/src/github.com/izumin5210/pubsubcli
+workflows:
+  build:
+    jobs:
+      # Download and cache dependencies
+      # https://circleci.com/orbs/registry/orb/timakin/go-module
+      - go-module/download:
+          <<: *filter-default
+          executor: default
+          persist-to-workspace: true
+          vendoring: true
+          workspace-root: /go/src/github.com/example/awesomecli
 
-        - go-crossbuild/build:
-            <<: *filter-default
-            executor: default
-            packages: ./cmd/pubsubcli
-            workspace-root: /go/src/github.com/izumin5210/pubsubcli
-            requires:
-              - go-module/download
+      # Build a Go application for clossplatform
+      # https://circleci.com/orbs/registry/orb/izumin5210/go-crossbuild
+      - go-crossbuild/build:
+          <<: *filter-default
+          executor: default
+          packages: ./cmd/awesomecli
+          workspace-root: /go/src/github.com/example/awesomecli
+          requires:
+            - go-module/download
 
-        - github-release/create:
-            <<: *filter-release
-            context: tool-releasing
-            requires:
-              - go-crossbuild/build
+      # Create a new release to GitHub Releases
+      # https://circleci.com/orbs/registry/orb/izumin5210/github-release
+      - github-release/create:
+          <<: *filter-release
+          # This context contains following env vars:
+          # * HOMEBREW_TAP_REPO_SLUG
+          # * GITHUB_TOKEN
+          # * GITHUB_EMAIL
+          # * GITHUB_USER
+          context: tool-releasing
+          requires:
+            - go-crossbuild/build
 
-        - homebrew/update:
-            <<: *filter-release
-            context: tool-releasing
-            requires:
-              - github-release/create
+      # Create (or update) a Homebrew formula
+      # https://circleci.com/orbs/registry/orb/izumin5210/homebrew
+      - homebrew/update:
+          <<: *filter-release
+          context: tool-releasing
+          requires:
+            - github-release/create
 ```
 
 
