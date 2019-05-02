@@ -115,7 +115,7 @@ jobs:
       # for build job
       output-dir:
         type: string
-        default: "./dist"
+        default: "./artifacts"
       packages:
         type: string
 
