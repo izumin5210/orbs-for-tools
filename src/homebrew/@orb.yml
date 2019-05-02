@@ -6,10 +6,9 @@ description: Create a new Formula for Homebrew
 #----------------------------------------------------------------
 common:
   release-params: &release-params
-    user:
+    tap:
       type: string
-    repository:
-      type: string
+      default: $HOMEBREW_TAP_REPO_SLUG
     token:
       type: string
       default: $GITHUB_TOKEN
@@ -65,6 +64,11 @@ commands:
               exit 1
             fi
 
+            if [ -z "<<parameters.tap>>" ]; then
+              echo "HOMEBREW_TAP_REPO_SLUG or `tap` param must be set"
+              exit 1
+            fi
+
       - run:
           name: "[homebrew] Install tools"
           command: go get github.com/Songmu/maltmill/cmd/maltmill
@@ -75,7 +79,7 @@ commands:
             curl \
               -o content.json \
               -H "Authorization: token <<parameters.token>>" \
-              https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>
+              https://api.github.com/repos/<<parameters.tap>>/contents/<<parameters.formula>>
 
             if [ "$(jq -M .content content.json)" = 'null' ]; then
               maltmill new -token <<parameters.token>> -w $CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
@@ -85,7 +89,7 @@ commands:
                 -X PUT \
                 -H "Authorization: token <<parameters.token>>" \
                 -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
-                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>
+                https://api.github.com/repos/<<parameters.tap>>/contents/<<parameters.formula>>
             else
               jq -M .content content.json | base64 -D > $CIRCLE_PROJECT_REPONAME.rb
               maltmill -token <<parameters.token>> -w $CIRCLE_PROJECT_REPONAME.rb
@@ -96,7 +100,7 @@ commands:
                 -X PUT \
                 -H "Authorization: token <<parameters.token>>" \
                 -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"sha\": \"$sha\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
-                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>
+                https://api.github.com/repos/<<parameters.tap>>/contents/<<parameters.formula>>
             fi
 
 #  Jobs
@@ -115,8 +119,7 @@ jobs:
 
     steps:
       - update:
-          user: <<parameters.user>>
-          repository: <<parameters.repository>>
+          tap: <<parameters.tap>>
           token: <<parameters.token>>
           committer-name: <<parameters.committer-name>>
           committer-email: <<parameters.committer-email>>
