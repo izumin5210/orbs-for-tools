@@ -2,8 +2,10 @@ GO_CROSSBUILD_TAG := 0.0.1
 GITHUB_RELEASE_TAG := 0.0.1
 HOMEBREW_TAG := 0.0.1
 
+dist:
+	@mkdir dist
+
 dist/%.yml: src/% dist
-	@mkdir $@
 	circleci config pack $< > $@
 
 define cmd-tmpl
