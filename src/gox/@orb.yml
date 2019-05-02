@@ -1,0 +1,149 @@
+version: 2.1
+
+description: Build Go applications for multiplatform
+
+#  Common
+#----------------------------------------------------------------
+common:
+  gox-params: &gox-params
+    arch:
+      type: string
+      default: "386 amd64"
+    cgo:
+      type: boolean
+      default: false
+    gcflags:
+      type: string
+      default: ""
+    ldflags:
+      type: string
+      default: ""
+    asmflags:
+      type: string
+      default: ""
+    tags:
+      type: string
+      default: ""
+    mod:
+      type: string
+      default: ""
+    os:
+      type: string
+      default: "darwin linux windows"
+    osarch:
+      type: string
+      default: ""
+    output:
+      type: string
+      default: "{{.Dir}}_{{.OS}}_{{.Arch}}"
+    parallel:
+      type: integer
+      default: -1
+
+#  Executors
+#----------------------------------------------------------------
+executors:
+  default:
+    parameters:
+      tag:
+        description: Specify circleci/golang image tag
+        type: string
+        default: 'latest'
+    docker:
+      - image: circleci/golang:<< parameters.tag >>
+
+#  Commands
+#----------------------------------------------------------------
+commands:
+  build:
+    description: Build an application
+    parameters:
+      <<: *gox-params
+      output-dir:
+        type: string
+        default: "."
+      packages:
+        type: string
+
+    steps:
+      - run:
+          name: "[gox] Install tools"
+          command: go get github.com/mitchellh/gox
+
+      - run:
+          name: "[gox] Build an application"
+          command: |
+            gox \
+              -arch="<<parameters.arch>>" \
+              <<#parameters.cgo>>--cgo <</ parameters.cgo>>\
+              -gcflags="<<parameters.gcflags>>" \
+              -ldflags="<<parameters.ldflags>>" \
+              -asmflags="<<parameters.asmflags>>" \
+              -tags="<<parameters.tags>>" \
+              -mod="<<parameters.mod>>" \
+              -os="<<parameters.os>>" \
+              -osarch="<<parameters.osarch>>" \
+              -output="<<parameters.output-dir>>/<<parameters.output>>" \
+              -parallel=<<parameters.parallel>> \
+              <<parameters.packages>>
+
+#  Jobs
+#----------------------------------------------------------------
+jobs:
+  build:
+    executor: <<parameters.executor>>
+    description: Build an application for multiplatform
+
+    parameters:
+      <<: *gox-params
+      executor:
+        description: Executor to use for building applications
+        type: executor
+        default: default
+      workspace-root:
+        type: string
+        default: .
+      attach-workspace:
+        type: boolean
+        default: true
+      persist-to-workspace:
+        type: boolean
+        default: true
+      persist-paths:
+        type: string
+        default: "."
+      # for build job
+      output-dir:
+        type: string
+        default: "./dist"
+      packages:
+        type: string
+
+    steps:
+      - when:
+          condition: <<parameters.attach-workspace>>
+          steps:
+            - attach_workspace:
+                at: <<parameters.workspace-root>>
+      - build:
+          output-dir: <<parameters.output-dir>>
+          packages: <<parameters.packages>>
+          # gox-params
+          arch: <<parameters.arch>>
+          cgo: <<parameters.cgo>>
+          gcflags: <<parameters.gcflags>>
+          ldflags: <<parameters.ldflags>>
+          asmflags: <<parameters.asmflags>>
+          tags: <<parameters.tags>>
+          mod: <<parameters.mod>>
+          os: <<parameters.os>>
+          osarch: <<parameters.osarch>>
+          output: <<parameters.output>>
+          parallel: <<parameters.parallel>>
+      - when:
+          condition: <<parameters.persist-to-workspace>>
+          steps:
+            - persist_to_workspace:
+                root: <<parameters.workspace-root>>
+                paths:
+                  - <<parameters.persist-paths>>

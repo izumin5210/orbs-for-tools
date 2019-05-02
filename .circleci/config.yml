@@ -1,0 +1,26 @@
+version: 2.1
+
+orbs:
+  orb-tools: circleci/orb-tools@8.8.0
+
+workflows:
+  lint_pack-validate_publish-dev:
+    jobs:
+      - orb-tools/lint
+
+      - orb-tools/pack:
+          name: pack-gox
+          source-dir: src/gox
+          destination-orb-path: packed/gox/orb.yml
+          workspace-path: packed/gox/orb.yml
+          artifact-path: packed/gox/orb.yml
+          requires:
+            - orb-tools/lint
+
+      - orb-tools/publish-dev:
+          name: publish-dev-gox
+          context: orb-publishing
+          orb-name: izumin5210/gox
+          orb-path: workspace/packed/gox/orb.yml
+          requires:
+            - pack-gox
