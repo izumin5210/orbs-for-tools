@@ -5,40 +5,25 @@ description: Build Go applications for multiplatform
 #  Common
 #----------------------------------------------------------------
 common:
-  gox-params: &gox-params
+  gox-params: &goxz-params
+    app_name:
+      type: string
+      default: $CIRCLE_PROJECT_REPONAME
     arch:
       type: string
-      default: "386 amd64"
-    cgo:
-      type: boolean
-      default: false
-    gcflags:
+      default: "amd64"
+    dest:
       type: string
-      default: ""
+      default: "./artifacts"
     ldflags:
-      type: string
-      default: ""
-    asmflags:
       type: string
       default: ""
     tags:
       type: string
       default: ""
-    mod:
-      type: string
-      default: ""
     os:
       type: string
-      default: "darwin linux windows"
-    osarch:
-      type: string
-      default: ""
-    output:
-      type: string
-      default: "{{.Dir}}_{{.OS}}_{{.Arch}}"
-    parallel:
-      type: integer
-      default: -1
+      default: "darwin,linux,windows"
 
 #  Executors
 #----------------------------------------------------------------
@@ -58,33 +43,25 @@ commands:
   build:
     description: Build an application
     parameters:
-      <<: *gox-params
-      output-dir:
-        type: string
-        default: "."
+      <<: *goxz-params
       packages:
         type: string
 
     steps:
       - run:
-          name: "[gox] Install tools"
-          command: go get github.com/mitchellh/gox
+          name: "[go-crossbuild] Install tools"
+          command: go get github.com/Songmu/goxz/cmd/goxz
 
       - run:
-          name: "[gox] Build an application"
+          name: "[go-crossbuild] Build an application"
           command: |
-            gox \
+            goxz \
               -arch="<<parameters.arch>>" \
-              <<#parameters.cgo>>--cgo <</ parameters.cgo>>\
-              -gcflags="<<parameters.gcflags>>" \
-              -ldflags="<<parameters.ldflags>>" \
-              -asmflags="<<parameters.asmflags>>" \
-              -tags="<<parameters.tags>>" \
-              -mod="<<parameters.mod>>" \
+              -build-ldflags="<<parameters.ldflags>>" \
+              -build-tags="<<parameters.tags>>" \
+              -d="<<parameters.dest>>" \
+              -n="<<parameters.app_name>>" \
               -os="<<parameters.os>>" \
-              -osarch="<<parameters.osarch>>" \
-              -output="<<parameters.output-dir>>/<<parameters.output>>" \
-              -parallel=<<parameters.parallel>> \
               <<parameters.packages>>
 
 #  Jobs
@@ -95,14 +72,14 @@ jobs:
     description: Build an application for multiplatform
 
     parameters:
-      <<: *gox-params
+      <<: *goxz-params
       executor:
         description: Executor to use for building applications
         type: executor
         default: default
       workspace-root:
         type: string
-        default: .
+        default: "."
       attach-workspace:
         type: boolean
         default: true
@@ -113,9 +90,6 @@ jobs:
         type: string
         default: "."
       # for build job
-      output-dir:
-        type: string
-        default: "./artifacts"
       packages:
         type: string
 
@@ -126,20 +100,14 @@ jobs:
             - attach_workspace:
                 at: <<parameters.workspace-root>>
       - build:
-          output-dir: <<parameters.output-dir>>
           packages: <<parameters.packages>>
           # gox-params
+          app_name: <<parameters.app_name>>
           arch: <<parameters.arch>>
-          cgo: <<parameters.cgo>>
-          gcflags: <<parameters.gcflags>>
+          dest: <<parameters.dest>>
           ldflags: <<parameters.ldflags>>
-          asmflags: <<parameters.asmflags>>
           tags: <<parameters.tags>>
-          mod: <<parameters.mod>>
           os: <<parameters.os>>
-          osarch: <<parameters.osarch>>
-          output: <<parameters.output>>
-          parallel: <<parameters.parallel>>
       - when:
           condition: <<parameters.persist-to-workspace>>
           steps:
