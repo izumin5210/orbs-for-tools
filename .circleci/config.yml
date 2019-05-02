@@ -41,3 +41,20 @@ workflows:
           orb-path: workspace/packed/github-release/orb.yml
           requires:
             - pack-github-release
+
+      - orb-tools/pack:
+          name: pack-homebrew
+          source-dir: src/homebrew
+          destination-orb-path: packed/homebrew/orb.yml
+          workspace-path: packed/homebrew/orb.yml
+          artifact-path: packed/homebrew/orb.yml
+          requires:
+            - orb-tools/lint
+
+      - orb-tools/publish-dev:
+          name: publish-dev-homebrew
+          context: orb-publishing
+          orb-name: izumin5210/homebrew
+          orb-path: workspace/packed/homebrew/orb.yml
+          requires:
+            - pack-homebrew

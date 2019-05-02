@@ -1,0 +1,126 @@
+version: 2.1
+
+description: Create a new Formula for Homebrew
+
+#  Common
+#----------------------------------------------------------------
+common:
+  release-params: &release-params
+    user:
+      type: string
+      default: $CIRCLE_PROJECT_USERNAME
+    repository:
+      type: string
+      default: $CIRCLE_PROJECT_REPONAME
+    token:
+      type: string
+      default: $GITHUB_TOKEN
+    commit-message:
+      type: string
+      default: "Bump ${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME} formula"
+    committer-name:
+      type: string
+      default: $GITHUB_USER
+    committer-email:
+      type: string
+      default: $GITHUB_EMAIL
+    formula:
+      type: string
+      default: "Formula/${CIRCLE_PROJECT_REPONAME}.rb"
+
+#  Executor
+#----------------------------------------------------------------
+executors:
+  default:
+    parameters:
+      tag:
+        description: Specify circleci/golang image tag
+        type: string
+        default: 'latest'
+    docker:
+      - image: circleci/golang:<< parameters.tag >>
+
+#  Commands
+#----------------------------------------------------------------
+commands:
+  update:
+    description: Create a new Formula for Homebrew
+    parameters:
+      <<: *release-params
+
+    steps:
+      - run:
+          name: "[homebrew] Validate envs"
+          command: |
+            if [ -z "<<parameters.committer-name>>" ]; then
+              echo "GITHUB_USER must be set"
+              exit 1
+            fi
+
+            if [ -z "<<parameters.committer-email>>" ]; then
+              echo "GITHUB_EMAIL must be set"
+              exit 1
+            fi
+
+            if [ -z "<<parameters.token>>" ]; then
+              echo "GITHUB_TOKEN must be set"
+              exit 1
+            fi
+
+      - run:
+          name: "[homebrew] Install tools"
+          command: go get github.com/Songmu/maltmill/cmd/maltmill
+
+      - run:
+          name: "[homewbrew] Create or update Formula"
+          command: |
+            curl \
+              -o content.json \
+              -H "Authorization: token <<parameters.token>>" \
+              https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>.rb
+
+            if [ "$(jq -M .content content.json)" = 'null' ]; then
+              maltmil new -token <<parameters.token>> -w <<parameters.user>>/<<parameters.repository>>
+              content=$(base64 -i -w 0 <<parameters.repository>>.rb)
+              curl \
+                --fail \
+                -X PUT \
+                -H "Authorization: token <<parameters.token>>" \
+                -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
+                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>.rb
+            else
+              jq -M .content content.json | base64 -D > <<parameters.repository>>.rb
+              maltmil -token <<parameters.token>> -w <<parameters.repository>>.rb
+              content=$(base64 -i -w 0 <<parameters.repository>>.rb)
+              sha=$(jq -M .sha content.json)
+              curl \
+                --fail \
+                -X PUT \
+                -H "Authorization: token <<parameters.token>>" \
+                -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"sha\": \"$sha\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
+                https://api.github.com/repos/<<parameters.user>>/<<parameters.repository>>/contents/<<parameters.formula>>.rb
+            fi
+
+#  Jobs
+#----------------------------------------------------------------
+jobs:
+  update:
+    executor: <<parameters.executor>>
+    description: Create a new Formula for Homebrew
+
+    parameters:
+      <<: *release-params
+      executor:
+        description: Executor to use for building applications
+        type: executor
+        default: default
+
+    steps:
+      - update:
+          user: <<parameters.user>>
+          repository: <<parameters.repository>>
+          token: <<parameters.token>>
+          committer-name: <<parameters.committer-name>>
+          committer-email: <<parameters.committer-email>>
+          commit-message: <<parameters.commit-message>>
+          formula: <<parameters.formula>>
