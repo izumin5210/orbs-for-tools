@@ -80,14 +80,80 @@ workflows:
 
 ## [go-crossbuild ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/go-crossbuild)](https://circleci.com/orbs/registry/orb/izumin5210/go-crossbuild)
 
-TBD
+Build Go applications for multiplatform and packaging with [goxz](https://github.com/Songmu/goxz)
+
+```yaml
+workflows:
+  build:
+    jobs:
+      # you should download dependencies
+      - setup
+
+      - go-crossbuild/build:
+          executor: default
+          packages: ./cmd/awesomecli
+          workspace-root: /go/src/github.com/example/awesomecli
+          requires:
+            - setup
+```
 
 
 ## [github-release ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/github-release)](https://circleci.com/orbs/registry/orb/izumin5210/github-release)
 
-TBD
+Create a new release on GitHub with [ghr](https://github.com/tcnksm/ghr)
+
+
+```yaml
+aliases:
+  filter-release: &filter-release
+    filters:
+      branches:
+        ignore: /.*/
+      tags:
+        only: /^v\d+\.\d+\.\d+$/
+
+workflows:
+  build:
+    jobs:
+      # you should put built binaries into <path> of github-release/create
+      # default: ./artifacts/
+      - build
+
+      - github-release/create:
+          <<: *filter-release
+          # This context contains following env vars:
+          # * GITHUB_TOKEN
+          context: tool-releasing
+          requires:
+            - go-crossbuild/build
+```
 
 
 ## [homebrew ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/homebrew)](https://circleci.com/orbs/registry/orb/izumin5210/homebrew)
 
-TBD
+Create a Formula for Homebrew with [maltmill](https://github.com/Songmu/maltmill) and commit it to tap repository
+
+
+```yaml
+aliases:
+  filter-release: &filter-release
+    filters:
+      branches:
+        ignore: /.*/
+      tags:
+        only: /^v\d+\.\d+\.\d+$/
+
+workflows:
+  build:
+    jobs:
+      - homebrew/update:
+          <<: *filter-release
+          # This context contains following env vars:
+          # * HOMEBREW_TAP_REPO_SLUG
+          # * GITHUB_TOKEN
+          # * GITHUB_EMAIL
+          # * GITHUB_USER
+          context: tool-releasing
+          requires:
+            - github-release/create
+```
