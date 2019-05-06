@@ -1,0 +1,29 @@
+description: |
+  Describe commands on workflows directly, like inline-steps
+
+parameters:
+  executor:
+    type: executor
+    description: "Executor to run commands"
+  steps:
+    type: steps
+    description: "Steps to run"
+  workspace-root:
+    type: string
+    default: "."
+    description: "A path to a workspace root"
+  attach-workspace:
+    type: boolean
+    default: true
+    description: "Attach to an existing workspace"
+
+executor: << parameters.executor >>
+
+steps:
+  - when:
+      condition: <<parameters.attach-workspace>>
+      steps:
+        - attach_workspace:
+            at: <<parameters.workspace-root>>
+
+  - steps: << parameters.steps >>

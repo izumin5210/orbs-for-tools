@@ -75,3 +75,20 @@ workflows:
           orb-path: workspace/packed/protobuf/orb.yml
           requires:
             - pack-protobuf
+
+      - orb-tools/pack:
+          name: pack-inline
+          source-dir: src/inline
+          destination-orb-path: packed/inline/orb.yml
+          workspace-path: packed/inline/orb.yml
+          artifact-path: packed/inline/orb.yml
+          requires:
+            - orb-tools/lint
+
+      - orb-tools/publish-dev:
+          name: publish-dev-inline
+          context: orb-publishing
+          orb-name: izumin5210/inline
+          orb-path: workspace/packed/inline/orb.yml
+          requires:
+            - pack-inline

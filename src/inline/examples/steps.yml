@@ -1,0 +1,74 @@
+usage:
+  version: 2.1
+
+  orbs:
+    go-module: timakin/go-module@0.3.0
+    inline: izumin5210/inline@0.0.1
+
+  executors:
+    golang:
+      parameters:
+        version:
+          type: string
+      docker:
+        - image: circleci/golang:<< parameters.version >>
+      environment:
+        - GO111MODULE: "on"
+
+  aliases:
+    go1.11: &go-1-11
+      executor:
+        name: golang
+        version: '1.11'
+    go1.12: &go-1-12
+      executor:
+        name: golang
+        version: '1.12'
+
+  workflows:
+    test:
+      jobs:
+        - go-module/download:
+            <<: *go-1-12
+            name: 'setup-1.12'
+            persist-to-workspace: true
+            vendoring: true
+
+        - go-module/download:
+            <<: *go-1-11
+            name: 'setup-1.11'
+            persist-to-workspace: true
+            vendoring: true
+
+        - inline/steps:
+            <<: *go-1-12
+            name: 'test-1.12'
+            steps:
+              - run: make cover
+              - run: bash <(curl -s https://codecov.io/bash)
+            requires:
+              - setup-1.12
+
+        - inline/steps:
+            <<: *go-1-11
+            name: 'test-1.11'
+            steps:
+              - run: make test
+            requires:
+              - setup-1.11
+
+        - inline/steps:
+            <<: *go-1-12
+            name: 'test-e2e-1.12'
+            steps:
+              - run: make test-e2e
+            requires:
+              - setup-1.12
+
+        - inline/steps:
+            <<: *go-1-11
+            name: 'test-e2e-1.11'
+            steps:
+              - run: make test-e2e
+            requires:
+              - setup-1.11

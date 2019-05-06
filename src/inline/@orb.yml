@@ -1,0 +1,5 @@
+version: 2.1
+
+description: |
+  Describe commands on workflows directly, like inline-steps
+  https://github.com/izumin5210/orbs-for-tools
