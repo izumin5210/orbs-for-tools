@@ -39,6 +39,24 @@ common:
       default: v0.4.1
       description: "Version of github.com/Songmu/goxz"
 
+  ci-params: &ci-params
+    workspace-root:
+      type: string
+      default: "."
+      description: "A path to a workspace root"
+    attach-workspace:
+      type: boolean
+      default: true
+      description: "Attach to an existing workspace"
+    persist-to-workspace:
+      type: boolean
+      default: true
+      description: "Persis a current workspace"
+    persist-paths:
+      type: string
+      default: "."
+      description: "A path that will be persisted"
+
 #  Executors
 #----------------------------------------------------------------
 executors:
@@ -58,8 +76,15 @@ commands:
     description: Build an application
     parameters:
       <<: *goxz-params
+      <<: *ci-params
 
     steps:
+      - when:
+          condition: <<parameters.attach-workspace>>
+          steps:
+            - attach_workspace:
+                at: <<parameters.workspace-root>>
+
       - run:
           name: "[go-crossbuild] Install tools"
           command: |
@@ -80,6 +105,14 @@ commands:
               -os="<<parameters.os>>" \
               <<parameters.packages>>
 
+      - when:
+          condition: <<parameters.persist-to-workspace>>
+          steps:
+            - persist_to_workspace:
+                root: <<parameters.workspace-root>>
+                paths:
+                  - <<parameters.persist-paths>>
+
 #  Jobs
 #----------------------------------------------------------------
 jobs:
@@ -89,34 +122,15 @@ jobs:
 
     parameters:
       <<: *goxz-params
+      <<: *ci-params
       executor:
         description: Executor to use for building applications
         type: executor
         default: default
-      workspace-root:
-        type: string
-        default: "."
-        description: "A path to a workspace root"
-      attach-workspace:
-        type: boolean
-        default: true
-        description: "Attach to an existing workspace"
-      persist-to-workspace:
-        type: boolean
-        default: true
-        description: "Persis a current workspace"
-      persist-paths:
-        type: string
-        default: "."
-        description: "A path that will be persisted"
 
     steps:
-      - when:
-          condition: <<parameters.attach-workspace>>
-          steps:
-            - attach_workspace:
-                at: <<parameters.workspace-root>>
       - build:
+          # goxz-params
           app_name: <<parameters.app_name>>
           arch: <<parameters.arch>>
           dest: <<parameters.dest>>
@@ -125,10 +139,8 @@ jobs:
           os: <<parameters.os>>
           packages: <<parameters.packages>>
           goxz-version: <<parameters.goxz-version>>
-      - when:
-          condition: <<parameters.persist-to-workspace>>
-          steps:
-            - persist_to_workspace:
-                root: <<parameters.workspace-root>>
-                paths:
-                  - <<parameters.persist-paths>>
+          # ci-params
+          workspace-root: <<parameters.workspace-root>>
+          attach-workspace: <<parameters.attach-workspace>>
+          persist-to-workspace: <<parameters.persist-to-workspace>>
+          persist-paths: <<parameters.persist-paths>>
