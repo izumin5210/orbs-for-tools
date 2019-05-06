@@ -56,6 +56,14 @@ common:
       type: string
       default: "."
       description: "A path that will be persisted"
+    store-artifacts:
+      type: boolean
+      default: true
+      description: "Store built binary into artifacts"
+    artifacts-dest:
+      type: string
+      default: ""
+      description: "Prefix for artifacts path"
 
 #  Executors
 #----------------------------------------------------------------
@@ -106,6 +114,13 @@ commands:
               <<parameters.packages>>
 
       - when:
+          condition: <<parameters.store-artifacts>>
+          steps:
+            - store_artifacts:
+                path: <<parameters.dest>>
+                destination: <<parameters.artifacts-dest>>
+
+      - when:
           condition: <<parameters.persist-to-workspace>>
           steps:
             - persist_to_workspace:
@@ -144,3 +159,5 @@ jobs:
           attach-workspace: <<parameters.attach-workspace>>
           persist-to-workspace: <<parameters.persist-to-workspace>>
           persist-paths: <<parameters.persist-paths>>
+          store-artifacts: <<parameters.store-artifacts>>
+          artifacts-dest: <<parameters.artifacts-dest>>
