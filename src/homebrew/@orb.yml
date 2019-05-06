@@ -37,6 +37,13 @@ common:
       default: v0.4.1
       description: "Version of github.com/Songmu/maltmill"
 
+#  Executors
+#----------------------------------------------------------------
+executors:
+  default:
+    docker:
+      - image: circleci/buildpack-deps:latest
+
 #  Commands
 #----------------------------------------------------------------
 commands:
@@ -113,8 +120,7 @@ jobs:
   update:
     description: Create a new Formula for Homebrew
 
-    docker:
-      - image: circleci/buildpack-deps:latest
+    executor: <<parameters.executor>>
 
     parameters:
       <<: *release-params

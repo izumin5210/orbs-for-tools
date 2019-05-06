@@ -66,6 +66,13 @@ common:
       default: v0.12.1
       description: "Version of github.com/tcnksm/ghr"
 
+#  Executors
+#----------------------------------------------------------------
+executors:
+  default:
+    docker:
+      - image: circleci/buildpack-deps:latest
+
 #  Commands
 #----------------------------------------------------------------
 commands:
@@ -107,8 +114,7 @@ jobs:
   create:
     description: Create a new release on GitHub
 
-    docker:
-      - image: circleci/buildpack-deps:latest
+    executor: <<parameters.executor>>
 
     parameters:
       <<: *ghr-params
