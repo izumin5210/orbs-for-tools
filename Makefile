@@ -8,16 +8,24 @@ dist:
 dist/%.yml: src/% dist
 	circleci config pack $< > $@
 
-define cmd-tmpl
+VALIDATES :=
 
+define cmd-tmpl
 $(eval NAME := $(notdir $(1)))
+$(eval VALIDATES += validate-$(NAME))
 
 .PHONY: publish-$(NAME)
 publish-$(NAME): dist/$(NAME).yml
 	circleci orb publish $$< izumin5210/$(NAME)@$(2)
 
+.PHONY: validate-$(NAME)
+validate-$(NAME): dist/$(NAME).yml
+	circleci orb validate $$<
 endef
 
 $(eval $(call cmd-tmpl,./src/go-crossbuild,$(GO_CROSSBUILD_TAG)))
 $(eval $(call cmd-tmpl,./src/github-release,$(GITHUB_RELEASE_TAG)))
 $(eval $(call cmd-tmpl,./src/homebrew,$(HOMEBREW_TAG)))
+
+.PHONY: validate
+validate: $(VALIDATES)
