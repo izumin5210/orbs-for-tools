@@ -58,3 +58,20 @@ workflows:
           orb-path: workspace/packed/homebrew/orb.yml
           requires:
             - pack-homebrew
+
+      - orb-tools/pack:
+          name: pack-protobuf
+          source-dir: src/protobuf
+          destination-orb-path: packed/protobuf/orb.yml
+          workspace-path: packed/protobuf/orb.yml
+          artifact-path: packed/protobuf/orb.yml
+          requires:
+            - orb-tools/lint
+
+      - orb-tools/publish-dev:
+          name: publish-dev-protobuf
+          context: orb-publishing
+          orb-name: izumin5210/protobuf
+          orb-path: workspace/packed/protobuf/orb.yml
+          requires:
+            - pack-protobuf

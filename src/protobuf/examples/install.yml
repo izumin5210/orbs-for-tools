@@ -1,0 +1,21 @@
+description: Install protoc command and standard libs
+
+usage:
+  version: 2.1
+
+  orbs:
+    protobuf: izumin5210/protobuf@0.0.1
+
+  jobs:
+    protoc:
+      docker:
+        - image: circleci/golang
+      steps:
+        - run: protoc --version
+
+  workflows:
+    build:
+      jobs:
+        - protobuf/install
+
+        - protoc

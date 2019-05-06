@@ -1,0 +1,5 @@
+version: 2.1
+
+description: |
+  Install protobuf (protoc command and standard libs)
+  https://github.com/izumin5210/orbs-for-tools
