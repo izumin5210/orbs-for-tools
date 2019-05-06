@@ -8,7 +8,7 @@ description: |
 #----------------------------------------------------------------
 common:
   goxz-params: &goxz-params
-    app_name:
+    app-name:
       type: string
       default: $CIRCLE_PROJECT_REPONAME
     arch:
@@ -101,7 +101,7 @@ commands:
               -build-ldflags="<<parameters.ldflags>>" \
               -build-tags="<<parameters.tags>>" \
               -d="<<parameters.dest>>" \
-              -n="<<parameters.app_name>>" \
+              -n="<<parameters.app-name>>" \
               -os="<<parameters.os>>" \
               <<parameters.packages>>
 
@@ -131,7 +131,7 @@ jobs:
     steps:
       - build:
           # goxz-params
-          app_name: <<parameters.app_name>>
+          app-name: <<parameters.app-name>>
           arch: <<parameters.arch>>
           dest: <<parameters.dest>>
           ldflags: <<parameters.ldflags>>
