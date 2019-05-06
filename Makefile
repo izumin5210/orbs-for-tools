@@ -1,6 +1,6 @@
 GO_CROSSBUILD_TAG := 0.1.0
 GITHUB_RELEASE_TAG := 0.1.1
-HOMEBREW_TAG := 0.1.0
+HOMEBREW_TAG := 0.1.1
 
 dist:
 	@mkdir dist
