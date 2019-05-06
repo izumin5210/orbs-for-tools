@@ -4,6 +4,14 @@
 
 :recycle: CircleCI Orbs for Continous-Delivery for Tools
 
+| name | description | version |
+| --- | --- | --- |
+| [**go-crossbuild**](#go-crossbuild) | Build Go applications for multiplatform and packaging with [goxz](https://github.com/Songmu/goxz) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/go-crossbuild)](https://circleci.com/orbs/registry/orb/izumin5210/go-crossbuild) |
+| [**github-release**](#github-release) | Create a new release on GitHub with [ghr](https://github.com/tcnksm/ghr) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/github-release)](https://circleci.com/orbs/registry/orb/izumin5210/github-release) |
+| [**homebrew**](#homebrew) | Create a Formula for Homebrew with [maltmill](https://github.com/Songmu/maltmill) and commit it to tap repository | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/homebrew)](https://circleci.com/orbs/registry/orb/izumin5210/homebrew) |
+| [**inline**](#inline) | Describe commands on workflows directly, like inline-steps | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/inline)](https://circleci.com/orbs/registry/orb/izumin5210/inline) |
+| [**protobuf**](#protobuf) | Install protobuf (protoc command and standard libs) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/protobuf)](https://circleci.com/orbs/registry/orb/izumin5210/protobuf) |
+
 ```yaml
 version: 2.1
 
@@ -82,6 +90,9 @@ workflows:
 
 Build Go applications for multiplatform and packaging with [goxz](https://github.com/Songmu/goxz)
 
+<details>
+<summary>Example</summary>
+
 ```yaml
 workflows:
   build:
@@ -97,11 +108,15 @@ workflows:
             - setup
 ```
 
+</details>
+
 
 ## [github-release ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/github-release)](https://circleci.com/orbs/registry/orb/izumin5210/github-release)
 
 Create a new release on GitHub with [ghr](https://github.com/tcnksm/ghr)
 
+<details>
+<summary>Example</summary>
 
 ```yaml
 aliases:
@@ -128,11 +143,15 @@ workflows:
             - go-crossbuild/build
 ```
 
+</details>
+
 
 ## [homebrew ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/homebrew)](https://circleci.com/orbs/registry/orb/izumin5210/homebrew)
 
 Create a Formula for Homebrew with [maltmill](https://github.com/Songmu/maltmill) and commit it to tap repository
 
+<details>
+<summary>Example</summary>
 
 ```yaml
 aliases:
@@ -157,3 +176,122 @@ workflows:
           requires:
             - github-release/create
 ```
+
+</details>
+
+
+## [inline ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/inline)](https://circleci.com/orbs/registry/orb/izumin5210/inline)
+
+Describe commands on workflows directly, like inline-steps
+
+<details>
+<summary>Example</summary>
+
+```yaml
+version: 2.1
+
+orbs:
+  go-module: timakin/go-module@0.3.0
+  inline: izumin5210/inline@0.0.1
+
+executors:
+  golang:
+    parameters:
+      version:
+        type: string
+    docker:
+      - image: circleci/golang:<< parameters.version >>
+    environment:
+      - GO111MODULE: "on"
+
+aliases:
+  go1.11: &go-1-11
+    executor:
+      name: golang
+      version: '1.11'
+  go1.12: &go-1-12
+    executor:
+      name: golang
+      version: '1.12'
+
+workflows:
+  test:
+    jobs:
+      - go-module/download:
+          <<: *go-1-12
+          name: 'setup-1.12'
+          persist-to-workspace: true
+          vendoring: true
+
+      - go-module/download:
+          <<: *go-1-11
+          name: 'setup-1.11'
+          persist-to-workspace: true
+          vendoring: true
+
+      - inline/steps:
+          <<: *go-1-12
+          name: 'test-1.12'
+          steps:
+            - run: make cover
+            - run: bash <(curl -s https://codecov.io/bash)
+          requires:
+            - setup-1.12
+
+      - inline/steps:
+          <<: *go-1-11
+          name: 'test-1.11'
+          steps:
+            - run: make test
+          requires:
+            - setup-1.11
+
+      - inline/steps:
+          <<: *go-1-12
+          name: 'test-e2e-1.12'
+          steps:
+            - run: make test-e2e
+          requires:
+            - setup-1.12
+
+      - inline/steps:
+          <<: *go-1-11
+          name: 'test-e2e-1.11'
+          steps:
+            - run: make test-e2e
+          requires:
+            - setup-1.11
+```
+
+</details>
+
+
+## [protobuf ![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/protobuf)](https://circleci.com/orbs/registry/orb/izumin5210/protobuf)
+
+Install protobuf (protoc command and standard libs)
+
+<details>
+<summary>Example</summary>
+
+```yaml
+version: 2.1
+
+orbs:
+  protobuf: izumin5210/protobuf@0.0.1
+
+jobs:
+  protoc:
+    docker:
+      - image: circleci/golang
+    steps:
+      - run: protoc --version
+
+workflows:
+  build:
+    jobs:
+      - protobuf/install
+
+      - protoc
+```
+
+</details>
