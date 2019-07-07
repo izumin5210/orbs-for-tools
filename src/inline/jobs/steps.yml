@@ -5,6 +5,7 @@ parameters:
   executor:
     type: executor
     description: "Executor to run commands"
+    default: default
   steps:
     type: steps
     description: "Steps to run"
