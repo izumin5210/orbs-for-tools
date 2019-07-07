@@ -102,7 +102,7 @@ commands:
                 -d "{ \"message\": \"<<parameters.commit-message>>\", \"content\": \"$content\", \"committer\": { \"name\": \"<<parameters.committer-name>>\", \"email\": \"<<parameters.committer-email>>\" } }" \
                 https://api.github.com/repos/<<parameters.tap>>/contents/<<parameters.formula>>
             else
-              jq -M -r .content content.json |  base64 -d > $CIRCLE_PROJECT_REPONAME.rb
+              jq -M -r .content content.json | base64 -d > $CIRCLE_PROJECT_REPONAME.rb
               maltmill -token <<parameters.token>> -w $CIRCLE_PROJECT_REPONAME.rb
               content=$(base64 -i -w 0 $CIRCLE_PROJECT_REPONAME.rb)
               sha=$(jq -M .sha content.json)
