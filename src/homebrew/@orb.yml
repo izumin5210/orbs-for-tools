@@ -105,7 +105,7 @@ commands:
               jq -M -r .content content.json | base64 -d > $CIRCLE_PROJECT_REPONAME.rb
               maltmill -token <<parameters.token>> -w $CIRCLE_PROJECT_REPONAME.rb
               content=$(base64 -i -w 0 $CIRCLE_PROJECT_REPONAME.rb)
-              sha=$(jq -M .sha content.json)
+              sha=$(jq -M -r .sha content.json)
               curl \
                 --fail \
                 -X PUT \
