@@ -6,20 +6,21 @@
 
 | name | description | version |
 | --- | --- | --- |
-| [**go-crossbuild**](#go-crossbuild) | Build Go applications for multiplatform and packaging with [goxz](https://github.com/Songmu/goxz) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/go-crossbuild)](https://circleci.com/orbs/registry/orb/izumin5210/go-crossbuild) |
-| [**github-release**](#github-release) | Create a new release on GitHub with [ghr](https://github.com/tcnksm/ghr) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/github-release)](https://circleci.com/orbs/registry/orb/izumin5210/github-release) |
-| [**homebrew**](#homebrew) | Create a Formula for Homebrew with [maltmill](https://github.com/Songmu/maltmill) and commit it to tap repository | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/homebrew)](https://circleci.com/orbs/registry/orb/izumin5210/homebrew) |
-| [**inline**](#inline) | Describe commands on workflows directly, like inline-steps | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/inline)](https://circleci.com/orbs/registry/orb/izumin5210/inline) |
-| [**protobuf**](#protobuf) | Install protobuf (protoc command and standard libs) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/protobuf)](https://circleci.com/orbs/registry/orb/izumin5210/protobuf) |
+| [**go-crossbuild**](#go-crossbuild-) | Build Go applications for multiplatform and packaging with [goxz](https://github.com/Songmu/goxz) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/go-crossbuild)](https://circleci.com/orbs/registry/orb/izumin5210/go-crossbuild) |
+| [**github-release**](#github-release-) | Create a new release on GitHub with [ghr](https://github.com/tcnksm/ghr) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/github-release)](https://circleci.com/orbs/registry/orb/izumin5210/github-release) |
+| [**homebrew**](#homebrew-) | Create a Formula for Homebrew with [maltmill](https://github.com/Songmu/maltmill) and commit it to tap repository | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/homebrew)](https://circleci.com/orbs/registry/orb/izumin5210/homebrew) |
+| [**inline**](#inline-) | Describe commands on workflows directly, like inline-steps | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/inline)](https://circleci.com/orbs/registry/orb/izumin5210/inline) |
+| [**protobuf**](#protobuf-) | Install protobuf (protoc command and standard libs) | [![CircleCI Orb Version](https://img.shields.io/badge/endpoint.svg?url=https://badges.circleci.io/orb/izumin5210/protobuf)](https://circleci.com/orbs/registry/orb/izumin5210/protobuf) |
 
 ```yaml
 version: 2.1
 
 orbs:
   go-module: timakin/go-module@0.3.0
-  go-crossbuild: izumin5210/go-crossbuild@0.0.1
-  github-release: izumin5210/github-release@0.0.1
-  homebrew: izumin5210/homebrew@0.0.1
+  go-crossbuild: izumin5210/go-crossbuild@0.1.1
+  github-release: izumin5210/github-release@0.1.1
+  homebrew: izumin5210/homebrew@0.1.3
+  inline: izumin5210/inline@0.1.0
 
 aliases:
   filter-default: &filter-default
@@ -35,7 +36,6 @@ aliases:
 
 executors:
   default:
-    working_directory: /go/src/github.com/example/awesomecli
     docker:
       - image: circleci/golang:1.12
     environment:
@@ -51,7 +51,16 @@ workflows:
           executor: default
           persist-to-workspace: true
           vendoring: true
-          workspace-root: /go/src/github.com/example/awesomecli
+
+      # Describe "run tests" steps to a workflow directly
+      # https://circleci.com/orbs/registry/orb/izumin5210/inline
+      - inline/steps:
+          executor: default
+          name: test
+          steps:
+            - run: go test -race -v ./...
+          requires:
+            - go-module/download
 
       # Build a Go application for clossplatform
       # https://circleci.com/orbs/registry/orb/izumin5210/go-crossbuild
@@ -59,7 +68,6 @@ workflows:
           <<: *filter-default
           executor: default
           packages: ./cmd/awesomecli
-          workspace-root: /go/src/github.com/example/awesomecli
           requires:
             - go-module/download
 
@@ -72,6 +80,7 @@ workflows:
           # * GITHUB_TOKEN
           # * GITHUB_EMAIL
           # * GITHUB_USER
+          executor: default
           context: tool-releasing
           requires:
             - go-crossbuild/build
@@ -80,6 +89,7 @@ workflows:
       # https://circleci.com/orbs/registry/orb/izumin5210/homebrew
       - homebrew/update:
           <<: *filter-release
+          executor: default
           context: tool-releasing
           requires:
             - github-release/create
